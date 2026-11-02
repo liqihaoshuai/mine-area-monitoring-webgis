@@ -1253,6 +1253,33 @@ body {
   box-shadow: 0 0 0 3px rgba(106, 168, 79, 0.12);
 }
 
+/* 浏览器自动填充会强行加淡蓝底和黑字，把登录框的配色打乱，这里统一抹掉 */
+.login-wrapper .el-input__inner:-webkit-autofill,
+.login-wrapper .el-input__inner:-webkit-autofill:hover,
+.login-wrapper .el-input__inner:-webkit-autofill:focus,
+.login-wrapper .el-input__inner:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #fbfdfa inset;
+  box-shadow: 0 0 0 1000px #fbfdfa inset;
+  -webkit-text-fill-color: #303133;
+  caret-color: #303133;
+  transition: background-color 99999s ease-out 0s;
+}
+
+/* 隐藏浏览器自带的密码显示按钮，只保留组件里的那只小眼睛 */
+.login-wrapper .el-input__inner::-ms-reveal,
+.login-wrapper .el-input__inner::-ms-clear {
+  display: none;
+}
+
+.login-wrapper .el-input__inner::-webkit-credentials-auto-fill-button,
+.login-wrapper .el-input__inner::-webkit-contacts-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+}
+
 .login-wrapper .el-input__prefix {
   color: #a9b6a2;
 }
