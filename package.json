@@ -1,0 +1,26 @@
+{
+  "name": "mine-area-monitoring",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "description": "基于 WebGIS 的露天矿山生态修复遥感监测与综合评价系统（Vue 3 版）",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4173"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.21.0",
+    "echarts": "^5.6.0",
+    "element-plus": "^2.14.7",
+    "leaflet": "^1.9.4",
+    "pinia": "^2.3.1",
+    "vue": "^3.5.44",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.6.2",
+    "vite": "^4.5.14"
+  }
+}
