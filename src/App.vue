@@ -50,6 +50,7 @@
               <el-form-item prop="password">
                 <el-input
                   type="password"
+                  show-password
                   prefix-icon="Lock"
                   placeholder="请输入密码"
                   v-model="loginModel.password"
@@ -102,6 +103,7 @@
               <el-form-item prop="password">
                 <el-input
                   type="password"
+                  show-password
                   prefix-icon="Lock"
                   placeholder="请输入密码"
                   v-model="registerModel.password"
