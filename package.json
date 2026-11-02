@@ -3,7 +3,7 @@
   "private": true,
   "version": "2.0.0",
   "type": "module",
-  "description": "基于 WebGIS 的露天矿山生态修复遥感监测与综合评价系统（Vue 3 版）",
+  "description": "基于 WebGIS 的露天矿山生态修复遥感监测与综合评价系统",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
     "build": "vite build",
