@@ -129,6 +129,12 @@ npm run build
 
 系统内置管理员账号 `admin`，初始口令见 `src/assets/userStore.js` 中 `DEFAULT_PASSWORD` 的拼接结果；正式使用前请在「用户管理」中修改。
 
+## 联系与反馈
+
+有问题欢迎咨询。
+
+- QQ：3123937191
+
 ## 许可证
 
 本项目采用 [MIT License](LICENSE) 开源。
