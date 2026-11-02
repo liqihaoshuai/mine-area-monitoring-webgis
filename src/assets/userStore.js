@@ -62,8 +62,37 @@ function saveUsers(users) {
   return users;
 }
 
+// 登录态放 sessionStorage：刷新同一标签页仍然有效，
+// 但新开标签页、重开浏览器或换设备都需要重新登录。
+// 早期版本存在 localStorage，会跨会话保留，导致“打开就是已登录”，这里统一迁移清理。
+function readSession() {
+  try {
+    const value = sessionStorage.getItem(SESSION_KEY);
+    return value === null ? null : JSON.parse(value);
+  } catch (error) {
+    return null;
+  }
+}
+
+function writeSession(value) {
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(value));
+  } catch (error) {
+    /* 隐私模式或存储受限时忽略，退回未登录状态 */
+  }
+}
+
+function removeSession() {
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+  } catch (error) {
+    /* ignore */
+  }
+  localStorage.removeItem(SESSION_KEY);
+}
+
 export function getCurrentUser() {
-  return readJson(SESSION_KEY, null);
+  return readSession();
 }
 
 /**
@@ -75,29 +104,32 @@ export function getCurrentUser() {
  * 避免下次刷新又读到同一份无效快照。
  */
 export function restoreSession() {
-  const session = readJson(SESSION_KEY, null);
+  // 清掉旧版写在 localStorage 的登录态，避免升级后仍然跨会话自动登录
+  localStorage.removeItem(SESSION_KEY);
+
+  const session = readSession();
   if (!session || !session.id) return null;
 
   const user = getUsers().find(item => item && item.id === session.id);
   if (!user || user.status !== 'active') {
-    localStorage.removeItem(SESSION_KEY);
+    removeSession();
     return null;
   }
 
   // 账号表里的角色/状态是权威值，快照过期时以账号表为准刷新一次
   const merged = withoutPassword(user);
-  writeJson(SESSION_KEY, merged);
+  writeSession(merged);
   return merged;
 }
 
 export function setCurrentUser(user) {
   const safeUser = withoutPassword(user);
-  writeJson(SESSION_KEY, safeUser);
+  writeSession(safeUser);
   return safeUser;
 }
 
 export function clearCurrentUser() {
-  localStorage.removeItem(SESSION_KEY);
+  removeSession();
 }
 
 export function authenticate(identifier, password) {
