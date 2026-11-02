@@ -75,6 +75,10 @@ npm run build
 
 ![矿区查看](docs/screenshots/mine-view.jpg)
 
+下图为 2026 年高程（DEM）显示，三个矿区同屏：
+
+![高程](docs/screenshots/elevation.jpg)
+
 ### 评价指标计算
 
 五项指标共用统一页面，下图为 FVC 计算结果。
@@ -105,13 +109,9 @@ npm run build
 
 ### 矿区生态修复效果评估
 
-管理评价记录，展示五项指标、环境协调性、土壤污染、年份、修复等级与综合得分。
+管理评价记录，展示五项指标、环境协调性、土壤污染、年份、修复等级与综合得分；点击「图形分析」可展开指标年度变化曲线与等级柱状图。
 
-![矿区生态修复效果评估](docs/screenshots/evaluate.jpg)
-
-点击「图形分析」展开指标年度变化曲线与生态评估等级柱状图：
-
-![图形分析](docs/screenshots/evaluate-analysis.jpg)
+![矿区生态修复效果评估](docs/screenshots/evaluate-analysis.jpg)
 
 ### 评估结果验证
 
