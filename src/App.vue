@@ -14,14 +14,14 @@
           <div
             v-if="loginActive"
             class="txt row aCenter jCenter"
-            @click="loginActive = !loginActive"
+            @click="switchToRegister"
           >
             去注册
           </div>
           <div
             v-else
             class="txt row aCenter jCenter"
-            @click="loginActive = !loginActive"
+            @click="switchToLogin"
           >
             去登录
           </div>
@@ -42,6 +42,8 @@
               <el-form-item prop="username">
                 <el-input
                   type="text"
+                  name="login-username"
+                  autocomplete="username"
                   prefix-icon="User"
                   placeholder="请输入账号 / 手机号 / 邮箱"
                   v-model="loginModel.username"
@@ -51,6 +53,8 @@
                 <el-input
                   type="password"
                   show-password
+                  name="login-password"
+                  autocomplete="current-password"
                   prefix-icon="Lock"
                   placeholder="请输入密码"
                   v-model="loginModel.password"
@@ -74,6 +78,8 @@
               <el-form-item prop="displayName">
                 <el-input
                   type="text"
+                  name="reg-name"
+                  autocomplete="off"
                   prefix-icon="User"
                   placeholder="请输入姓名"
                   v-model="registerModel.displayName"
@@ -82,6 +88,8 @@
               <el-form-item prop="username">
                 <el-input
                   type="text"
+                  name="reg-account"
+                  autocomplete="off"
                   placeholder="请输入账号 / 手机号 / 邮箱"
                   v-model="registerModel.username"
                 />
@@ -89,12 +97,17 @@
               <el-form-item prop="email">
                 <el-input
                   type="text"
+                  name="reg-email"
+                  autocomplete="off"
                   placeholder="请输入邮箱地址"
                   v-model="registerModel.email"
                 />
               </el-form-item>
               <el-form-item prop="mobile">
                 <el-input
+                  type="tel"
+                  name="reg-mobile"
+                  autocomplete="off"
                   placeholder="请输入手机号码"
                   v-model="registerModel.mobile"
                   style="width: 100%"
@@ -104,6 +117,8 @@
                 <el-input
                   type="password"
                   show-password
+                  name="reg-password"
+                  autocomplete="new-password"
                   prefix-icon="Lock"
                   placeholder="请输入密码"
                   v-model="registerModel.password"
@@ -442,6 +457,30 @@ export default {
       // 将 link 元素添加到 head 中
       document.head.appendChild(link);
     },
+    /** 切到注册：清空表单，避免浏览器把已保存的登录账号密码带进来 */
+    switchToRegister() {
+      this.loginActive = false;
+      this.registerModel = {
+        displayName: '',
+        username: '',
+        email: '',
+        mobile: '',
+        password: ''
+      };
+      this.$nextTick(() => {
+        if (this.$refs.registerRef) this.$refs.registerRef.clearValidate();
+      });
+    },
+
+    /** 切到登录：清掉密码，保留账号方便再次登录 */
+    switchToLogin() {
+      this.loginActive = true;
+      this.loginModel.password = '';
+      this.$nextTick(() => {
+        if (this.$refs.loginRef) this.$refs.loginRef.clearValidate();
+      });
+    },
+
     handleLogin() {
       this.$refs.loginRef.validate((valid) => {
         if (!valid) return;
