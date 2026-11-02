@@ -224,7 +224,7 @@
 
             <el-menu-item index="change" @click="goToRoute('/ChangeDetect')">
               <el-icon><DataAnalysis /></el-icon>
-              <span class="menu-item-text">变化检测</span>
+              <span class="menu-item-text">变化监测</span>
             </el-menu-item>
 
             <el-menu-item index="3">
@@ -282,7 +282,7 @@
       </el-container>
     </el-container>
 
-    <!-- 底图状态提示：固定定位、放在布局最外层，大屏/变化检测/分析页都能看到 -->
+    <!-- 底图状态提示：固定定位、放在布局最外层，大屏/变化监测/分析页都能看到 -->
     <div
       v-if="iflogin && basemapStatus && basemapStatus.fallback"
       class="basemap-status"
@@ -617,7 +617,7 @@ export default {
     if (this.map) {
       clearNonBaseLayers(this.map); // 调用清除非底图图层的函数
     }
-    // 变化检测页用的是自己的 Leaflet 实例，主地图清不到它的叠加图层，
+    // 变化监测页用的是自己的 Leaflet 实例，主地图清不到它的叠加图层，
     // 这里广播一个事件，让它自己清（页面没挂载时没人监听，无副作用）
     window.dispatchEvent(new CustomEvent('webgis:clear-overlays'));
   },
@@ -647,7 +647,7 @@ export default {
       } catch (error) {
         // 写入失败不影响开关本身
       }
-      // 广播给独立地图（变化检测页用的是自己的 Leaflet 实例）
+      // 广播给独立地图（变化监测页用的是自己的 Leaflet 实例）
       try {
         window.dispatchEvent(new CustomEvent('webgis:annotation-toggle', {
           detail: { visible: this.annotationVisible },
@@ -721,7 +721,7 @@ export default {
   mounted() {
     // 把「不含滚动条的可视宽度」同步到 CSS 变量，供右侧浮层面板定位。
     this.stopViewportSync = installViewportWidthVar();
-    // 变化检测页会把自己的地图盖在主地图上；此时主地图隐藏，底图没必要继续拉瓦片
+    // 变化监测页会把自己的地图盖在主地图上；此时主地图隐藏，底图没必要继续拉瓦片
     this.onBasemapSuspend = () => { if (this.basemap) this.basemap.suspend(); };
     this.onBasemapResume = () => { if (this.basemap) this.basemap.resume(); };
     window.addEventListener('webgis:basemap-suspend', this.onBasemapSuspend);

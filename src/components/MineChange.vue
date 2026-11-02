@@ -3,7 +3,7 @@
     <div ref="mapBox" class="change-map"></div>
 
     <div class="ctrl-panel">
-      <div class="ctrl-title">变化检测</div>
+      <div class="ctrl-title">变化监测</div>
 
       <div class="ctrl-row">
         <span class="ctrl-label">数据源</span>
@@ -36,7 +36,7 @@
         <el-radio-group v-model="mode" size="small" @change="onModeChange">
           <el-radio-button value="single">单年</el-radio-button>
           <el-radio-button value="swipe">卷帘</el-radio-button>
-          <el-radio-button value="diff" :disabled="isImagery">变化检测</el-radio-button>
+          <el-radio-button value="diff" :disabled="isImagery">变化监测</el-radio-button>
         </el-radio-group>
       </div>
 
@@ -88,7 +88,7 @@
         </div>
       </template>
 
-      <!-- 变化检测 -->
+      <!-- 变化监测 -->
       <template v-else>
         <div class="ctrl-row">
           <span class="ctrl-label">期间</span>
@@ -138,7 +138,7 @@ import { readAnnotationVisible } from '../assets/preferences.js';
 import { changeImageLayer } from './changeImageLayer.js';
 import { createBasemap } from '../assets/basemap.js';
 
-// 变化检测走 Flask 的 PNG 接口，不经过 GeoServer
+// 变化监测走 Flask 的 PNG 接口，不经过 GeoServer
 const API_BASE = window.location.origin;   // 同源：开发走 Vite 代理，生产同端口
 
 export default {
@@ -319,7 +319,7 @@ export default {
           this.renderSingle();
         })
         .catch(error => {
-          this.errorText = '读取变化检测元数据失败：' + error.message;
+          this.errorText = '读取变化监测元数据失败：' + error.message;
         });
     },
     url(path) {

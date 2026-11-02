@@ -233,7 +233,7 @@ export function createBasemap(map, options = {}) {
       fails = 0;
       if (imagery.redraw) imagery.redraw();
     },
-    // 供「本页自带地图」的模块临时停用主地图底图（如变化检测页把主地图藏起来时），
+    // 供「本页自带地图」的模块临时停用主地图底图（如变化监测页把主地图藏起来时），
     // 避免它继续请求瓦片，白耗配额
     suspend() {
       if (map && map.hasLayer(imagery)) map.removeLayer(imagery);

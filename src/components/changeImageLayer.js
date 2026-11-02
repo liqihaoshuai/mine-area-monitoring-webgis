@@ -1,7 +1,7 @@
 import L from 'leaflet';
 
 /**
- * 变化检测用的「图片瓦片层」。
+ * 变化监测用的「图片瓦片层」。
  *
  * 为什么不用 L.imageOverlay：
  *   一张 2112×1967 的 RGBA 图片挂上去，缩放时 Leaflet 只能靠 CSS transform 整体放大这张位图，
