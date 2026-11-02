@@ -57,10 +57,6 @@ npm run build
 - 天地图浏览器端 key：`src/assets/config.js` 中的 `tdtToken`，可在天地图控制台为该 key 设置授权域名；
 - 接口代理地址：`vite.config.js` 中的 `server.proxy`，按实际后端端口调整。
 
-## 说明
-
-本仓库仅包含前端代码。后端服务（Flask + 遥感栅格处理 + GeoServer 发布）与原始影像数据不在仓库内，需单独部署并与前端接口对接。
-
 ## 运行截图
 
 ### 监测大屏
