@@ -1,5 +1,6 @@
 //  导入axios
 import axios from 'axios';
+import { getToken, clearCurrentUser } from '../assets/userStore.js';
 
 // 创建一个 axios 实例，用于发送请求
 const apiClient = axios.create({
@@ -19,8 +20,12 @@ const apiClient = axios.create({
 // 添加请求拦截器
 apiClient.interceptors.request.use(
   config => {
-    // 在发送请求前做一些处理
-    console.log('发送请求:', config.url);
+    // 后端除 /api/auth/login|register 外全部要求令牌，这里统一挂上去
+    const token = getToken();
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   error => {
@@ -37,8 +42,13 @@ apiClient.interceptors.response.use(
     return response;
   },
   error => {
-    // 对响应错误做处理
-    console.error('响应错误:', error);
+    // 令牌过期或被停用：清掉本地会话并通知外层退回登录页。
+    // 用自定义事件而不是直接调路由，避免这里反向依赖 router。
+    const status = error.response ? error.response.status : 0;
+    if (status === 401 || status === 403) {
+      clearCurrentUser();
+      window.dispatchEvent(new CustomEvent('mine-auth-expired'));
+    }
     // 如果是跨域错误，提供更具体的错误信息
     if (error.message.includes('Network Error') || !error.response) {
       console.error('可能是跨域问题或服务器未响应');
@@ -46,6 +56,21 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+/**
+ * 给图片类地址补上令牌。
+ *
+ * Leaflet 的 <img>/canvas 直接发请求，带不了自定义请求头，后端因此对
+ * preview/download/png 这几条路径额外接受 ?token= 查询参数。
+ */
+export function withToken(url) {
+  if (!url) return url;
+  const token = getToken();
+  if (!token) return url;
+  const stamp = `token=${encodeURIComponent(token)}`;
+  if (String(url).indexOf('token=') >= 0) return url;
+  return String(url) + (String(url).indexOf('?') >= 0 ? '&' : '?') + stamp;
+}
 
 // 定义一个用于获取数据的函
 export default {
@@ -74,7 +99,7 @@ export default {
     // baseURL 现在是 '/'，直接拼会得到 '//api/...'（协议相对地址，会被解析成主机名 api），
     // 这里先去掉结尾斜杠，得到 '/api/...' 这样的同源相对路径。
     const base = String(apiClient.defaults.baseURL || '').replace(/\/+$/, '');
-    return `${base}/api/results/trend_${metric}/preview${query ? '?' + query : ''}`;
+    return withToken(`${base}/api/results/trend_${metric}/preview${query ? '?' + query : ''}`);
   },
   getMineStats(metric, params = {}) {
     return apiClient.get(`/api/results/${metric}/mine-stats`, { params });

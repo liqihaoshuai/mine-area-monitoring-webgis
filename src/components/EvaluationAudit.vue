@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="audit-panel">
     <div class="audit-head">
       <div class="audit-title-group">
@@ -296,6 +296,43 @@
         </div>
 
         <div class="audit-section">
+          <div class="section-head">
+            <span>赋权方法对比</span>
+            <span class="section-note">同一批记录，只换赋权方法，看评价结论怎么变</span>
+          </div>
+          <el-table :data="weightSchemeRows" size="small" class="audit-table">
+            <el-table-column prop="label" label="赋权方法" width="170"></el-table-column>
+            <el-table-column label="权重（FVC/VRI/NDMI/NDSI/RSEI）" width="300">
+              <template #default="scope">
+                <span class="weight-list">{{ scope.row.weightText }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="meanScore" label="平均综合分" width="110"></el-table-column>
+            <el-table-column label="等级分布（优/良/中/差）" width="190">
+              <template #default="scope">
+                {{ scope.row.gradeText }}
+              </template>
+            </el-table-column>
+            <el-table-column label="相对 AHP 的等级变化" width="170">
+              <template #default="scope">
+                <el-tag
+                  size="small"
+                  :type="scope.row.gradeChanges === 0 ? 'info' : (scope.row.gradeChanges <= 6 ? 'success' : (scope.row.gradeChanges <= 12 ? 'warning' : 'danger'))"
+                >
+                  {{ scope.row.gradeChanges === 0 ? '基准' : `${scope.row.gradeChanges} 条 / ${scope.row.total} 条` }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="maxScoreDelta" label="最大分差" width="100"></el-table-column>
+          </el-table>
+          <div class="section-note scheme-note">
+            AHP 由判断矩阵求主特征向量得到，CR = {{ weightSchemeDetail.ahpCr }}（{{ weightSchemeDetail.ahpPassed ? '通过' : '未通过' }}一致性检验）；
+            熵权法按指标区分度定权，FVC 得分标准差最大因而权重最高、NDMI/NDSI 几乎不区分样本因而权重趋零；
+            组合赋权取 α = {{ weightSchemeDetail.alpha }}。
+          </div>
+        </div>
+
+        <div class="audit-section">
           <div class="section-head"><span>检验结论</span></div>
           <ul class="conclusion-list">
             <li v-for="(item, index) in conclusions" :key="index">{{ item }}</li>
@@ -326,6 +363,7 @@ import {
   weightSensitivity,
   thresholdSensitivity,
 } from '../assets/evalAudit.js';
+import { schemeComparison, DEFAULT_ALPHA } from '../assets/weights.js';
 
 export default {
   name: 'EvaluationAudit',
@@ -421,6 +459,37 @@ export default {
         { label: '阈值整体上调 5 分', thresholdText: '85 / 75 / 65', changed: this.thresholdPlus.changed, total: this.thresholdPlus.total, rate: this.thresholdPlus.rate },
       ];
     },
+    // ===== 赋权方法对比 =====
+    // 同一批记录依次套 AHP / 熵权法 / 组合赋权，只换权重不换打分规则
+    schemeResult() {
+      return schemeComparison(this.records, DEFAULT_ALPHA);
+    },
+    weightSchemeRows() {
+      return this.schemeResult.rows.map(row => {
+        const weights = INDICATORS.map(item => {
+          const value = row.weights[item.key];
+          return value === undefined ? '—' : Number(value).toFixed(4);
+        });
+        return {
+          method: row.method,
+          label: row.label,
+          weightText: weights.join(' / '),
+          meanScore: row.meanScore === null ? '—' : row.meanScore,
+          gradeText: `${row.grades['优秀'] || 0} / ${row.grades['良好'] || 0} / ${row.grades['中等'] || 0} / ${row.grades['较差'] || 0}`,
+          gradeChanges: row.gradeChanges || 0,
+          maxScoreDelta: row.maxScoreDelta === undefined ? '—' : row.maxScoreDelta,
+          total: row.recordCount,
+        };
+      });
+    },
+    weightSchemeDetail() {
+      const ahp = this.schemeResult.schemes.ahp;
+      return {
+        ahpCr: ahp.cr,
+        ahpPassed: ahp.passed,
+        alpha: this.schemeResult.alpha,
+      };
+    },
     conclusions() {
       const result = [];
       result.push(this.issues.length
@@ -433,6 +502,16 @@ export default {
         ? `权重上下浮动 20% 时，等级变化比例最高 ${maxRate}%，结论对权重不敏感。`
         : `权重上下浮动 20% 时，等级变化比例最高 ${maxRate}%，权重设置会影响部分矿区结论。`);
       result.push(`分级阈值平移 ±5 分时，等级变化比例为 ${this.thresholdMinus.rate}% / ${this.thresholdPlus.rate}%。`);
+      // 赋权方法对比的结论单独一条：这是论文里"方法选择影响结论"的直接证据
+      const entropyRow = this.weightSchemeRows.find(row => row.method === 'ENTROPY');
+      const combinedRow = this.weightSchemeRows.find(row => row.method === 'COMBINED');
+      if (entropyRow && combinedRow) {
+        result.push(
+          `改用熵权法后平均综合分由 ${(this.weightSchemeRows[0] || {}).meanScore} 变为 ${entropyRow.meanScore}，`
+          + `${entropyRow.gradeChanges}/${entropyRow.total} 条记录等级变化；`
+          + `组合赋权（α=${this.weightSchemeDetail.alpha}）仅 ${combinedRow.gradeChanges}/${combinedRow.total} 条变化。`
+        );
+      }
       const s = this.transitionStat;
       result.push(`年际等级转移：等级提高 ${s.upgrade.count} 条、不变 ${s.same.count} 条、下降 ${s.downgrade.count} 条。`);
       return result;
@@ -956,6 +1035,16 @@ export default {
   font-size: 13px;
   line-height: 2;
   color: #3a4250;
+}
+
+/* 赋权方法对比：权重串用等宽数字，肉眼能对齐比较 */
+.weight-list {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2px;
+}
+
+.scheme-note {
+  line-height: 1.7;
 }
 
 .audit-panel .el-table th {

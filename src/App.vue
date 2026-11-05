@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <div v-if="!iflogin">
       <div class="login-wrapper">
@@ -330,7 +330,7 @@ import {
   authenticate,
   registerUser,
   restoreSession,
-  clearCurrentUser,
+  logout,
   roleLabel
 } from './assets/userStore.js';
 
@@ -482,11 +482,12 @@ export default {
     },
 
     handleLogin() {
-      this.$refs.loginRef.validate((valid) => {
+      this.$refs.loginRef.validate(async (valid) => {
         if (!valid) return;
 
         this.loginLoad = true;
-        const result = authenticate(this.loginModel.username, this.loginModel.password);
+        // 登录改由后端校验并签发 JWT，前端不再持有任何口令
+        const result = await authenticate(this.loginModel.username, this.loginModel.password);
         if (!result.ok) {
           this.loginLoad = false;
           this.$message.error(result.message);
@@ -513,7 +514,7 @@ export default {
      * 地图实例要一并销毁，否则换账号登录后底图/图层还是上一个人的残留。
      */
     handleLogout() {
-      clearCurrentUser();
+      logout().catch(() => {});
       this.currentUser = null;
       this.iflogin = false;
       this.loginModel.password = '';
@@ -544,10 +545,10 @@ export default {
       });
     },
     handleRegister() {
-      this.$refs.registerRef.validate((valid) => {
+      this.$refs.registerRef.validate(async (valid) => {
         if (!valid) return;
         // 自助注册一律为普通用户，角色不接受前端传参，避免越权注册管理员
-        const result = registerUser({
+        const result = await registerUser({
           displayName: this.registerModel.displayName,
           username: this.registerModel.username,
           email: this.registerModel.email,
@@ -769,6 +770,17 @@ export default {
     window.addEventListener('webgis:basemap-resume', this.onBasemapResume);
     // 底图状态（天地图限流 / 备用影像也失败）：页面上给明确提示，避免对着白底图猜
     window.addEventListener(BASEMAP_STATUS_EVENT, this.onBasemapStatus);
+    // 令牌过期或被后端判定失效时，DataService 的响应拦截器会广播这个事件，
+    // 这里统一退回登录页，避免界面停在一堆 401 上报的空白图层上。
+    this.onAuthExpired = () => {
+      if (!this.iflogin) return;
+      this.iflogin = false;
+      this.currentUser = null;
+      this.loginActive = true;
+      this.loginModel.password = '';
+      this.$message.warning('登录已过期，请重新登录');
+    };
+    window.addEventListener('mine-auth-expired', this.onAuthExpired);
     // 刷新后若会话有效且当前不在大屏，地图容器已渲染但没有实例，需要补建一次
     this.ensureMap();
   },
@@ -780,6 +792,7 @@ export default {
     window.removeEventListener('webgis:basemap-suspend', this.onBasemapSuspend);
     window.removeEventListener('webgis:basemap-resume', this.onBasemapResume);
     window.removeEventListener(BASEMAP_STATUS_EVENT, this.onBasemapStatus);
+    window.removeEventListener('mine-auth-expired', this.onAuthExpired);
     if (this.basemap) {
       this.basemap.destroy();
       this.basemap = null;

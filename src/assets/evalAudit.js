@@ -202,7 +202,7 @@ export function auditIssues(records) {
       (sum, item) => sum + Number(record[item.weightKey] || 0), 0
     );
     if (Math.abs(weightSum - 1) > WEIGHT_TOLERANCE) {
-      push('error', mine, sensor, year, `权重之和为 ${round(weightSum, 3)}，应为 1.000`);
+      push('error', mine, sensor, year, `权重之和为 ${round(weightSum, 3)}，应为 1.0`);
     }
 
     // 2) 指标取值是否在定义域内

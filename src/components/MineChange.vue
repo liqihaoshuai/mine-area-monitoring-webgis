@@ -137,6 +137,8 @@ import config from '../assets/config.js';
 import { readAnnotationVisible } from '../assets/preferences.js';
 import { changeImageLayer } from './changeImageLayer.js';
 import { createBasemap } from '../assets/basemap.js';
+import { withToken } from '../services/DataService.js';
+import { getToken } from '../assets/userStore.js';
 
 // 变化监测走 Flask 的 PNG 接口，不经过 GeoServer
 const API_BASE = window.location.origin;   // 同源：开发走 Vite 代理，生产同端口
@@ -299,7 +301,7 @@ export default {
     },
     loadMeta() {
       this.apiBase = API_BASE;
-      fetch(`${this.apiBase}/api/mine-view/meta`)
+      fetch(this.url('/api/mine-view/meta'), { headers: this.authHeaders() })
         .then(response => response.json())
         .then(data => {
           this.years = data.years || [];
@@ -324,6 +326,15 @@ export default {
     },
     url(path) {
       return `${this.apiBase}${path}`;
+    },
+    /**
+     * /api/* 现在都要令牌。这里没有走 axios，手工带上 Authorization。
+     * 图片类地址（L.imageOverlay / changeImageLayer）带不了请求头，
+     * 由 url() 之外的 addMineOverlays 用 withToken() 拼 ?token=。
+     */
+    authHeaders() {
+      const token = getToken();
+      return token ? { Authorization: `Bearer ${token}` } : {};
     },
     clearOverlays() {
       if (!this.map) return;
@@ -351,12 +362,12 @@ export default {
         // 不再让一张 2000×2000 的大图在缩放时整体重采样。
         // 加 ?changeLayer=image 可退回旧的 ImageOverlay 实现（对比/排障用）。
         const layer = this.useImageOverlay
-          ? L.imageOverlay(this.url(item.url), item.bounds, {
+          ? L.imageOverlay(withToken(this.url(item.url)), item.bounds, {
             pane: pane || 'overlayPane',
             opacity: opacity === undefined ? 0.85 : opacity,
             interactive: false,
           })
-          : changeImageLayer(this.url(item.url), item.bounds, {
+          : changeImageLayer(withToken(this.url(item.url)), item.bounds, {
             pane: pane || 'overlayPane',
             opacity: opacity === undefined ? 0.85 : opacity,
             interactive: false,
@@ -375,7 +386,7 @@ export default {
       const key = `${year}|${this.sensor}|img`;
       if (this.cache[key]) return Promise.resolve(this.cache[key]);
       const url = this.url(`/api/mine-view/imagery?year=${year}&sensor=${this.sensor}`);
-      return fetch(url)
+      return fetch(url, { headers: this.authHeaders() })
         .then(response => response.json())
         .then(data => {
           if (data.error) throw new Error(data.error);
@@ -387,7 +398,7 @@ export default {
       const key = `${year}|${this.metric}|${this.sensor}`;
       if (this.cache[key]) return Promise.resolve(this.cache[key]);
       const url = this.url(`/api/mine-view/layers?year=${year}&metric=${this.metric}&sensor=${this.sensor}`);
-      return fetch(url)
+      return fetch(url, { headers: this.authHeaders() })
         .then(response => response.json())
         .then(data => {
           if (data.error) throw new Error(data.error);
@@ -466,7 +477,7 @@ export default {
         `/api/mine-view/diff?y1=${this.diffFrom}&y2=${this.diffTo}` +
         `&metric=${this.metric}&sensor=${this.sensor}`
       );
-      fetch(url)
+      fetch(url, { headers: this.authHeaders() })
         .then(response => response.json())
         .then(data => {
           if (data.error) throw new Error(data.error);

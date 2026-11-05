@@ -119,7 +119,8 @@ export default {
   name: 'Administrator',
   data() {
     return {
-      users: getUsers(),
+      // 账号表在后端 backend/data/users.json，这里先给空数组，mounted 里再拉
+      users: [],
       keyword: '',
       roleFilter: '',
       statusFilter: '',
@@ -150,7 +151,14 @@ export default {
   },
   methods: {
     emptyForm() { return { displayName: '', username: '', email: '', mobile: '', role: 'user', password: '' }; },
-    reloadUsers() { this.users = getUsers(); },
+    /** 账号表在后端，读失败（令牌过期/网络断）要给提示，不能静默留空表 */
+    async reloadUsers() {
+      try {
+        this.users = await getUsers();
+      } catch (error) {
+        this.$message.error(`读取用户列表失败：${error.message}`);
+      }
+    },
     roleLabel,
     statusLabel,
     formatUserTime,
@@ -160,36 +168,39 @@ export default {
     openEditDialog(row) { this.editingId = row.id; this.form = { ...row, password: '' }; this.dialogVisible = true; },
     resetForm() { this.editingId = ''; this.form = this.emptyForm(); if (this.$refs.userForm) this.$refs.userForm.resetFields(); },
     saveUser() {
-      this.$refs.userForm.validate(valid => {
+      this.$refs.userForm.validate(async (valid) => {
         if (!valid) return;
         const result = this.editingId
-          ? updateUser(this.editingId, this.form)
-          : createUser(this.form);
+          ? await updateUser(this.editingId, this.form)
+          : await createUser(this.form);
         if (!result.ok) { this.$message.error(result.message); return; }
-        this.reloadUsers();
+        await this.reloadUsers();
         this.dialogVisible = false;
         this.$message.success('用户信息已保存');
       });
     },
-    toggleStatus(row) {
+    async toggleStatus(row) {
       // 管理员账号不提供停用入口，这里再兜一层，避免绕过界面直接调用。
       if (row.role === 'admin') {
         this.$message.warning('管理员账号不支持停用');
         return;
       }
-      const result = updateUser(row.id, { status: row.status === 'active' ? 'disabled' : 'active' });
+      const result = await updateUser(row.id, { status: row.status === 'active' ? 'disabled' : 'active' });
       if (!result.ok) { this.$message.error(result.message); return; }
-      this.reloadUsers();
+      await this.reloadUsers();
       this.$message.success(result.user.status === 'active' ? '账号已启用' : '账号已停用');
     },
     removeUser(row) {
-      this.$confirm(`确定删除账号“${row.username}”吗？删除后不可恢复。`, '删除确认', { type: 'warning' }).then(() => {
-        const result = deleteUser(row.id);
+      this.$confirm(`确定删除账号“${row.username}”吗？删除后不可恢复。`, '删除确认', { type: 'warning' }).then(async () => {
+        const result = await deleteUser(row.id);
         if (!result.ok) { this.$message.error(result.message); return; }
-        this.reloadUsers();
+        await this.reloadUsers();
         this.$message.success('用户已删除');
       }).catch(() => {});
     }
+  },
+  mounted() {
+    this.reloadUsers();
   }
 };
 </script>

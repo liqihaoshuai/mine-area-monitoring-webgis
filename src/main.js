@@ -6,11 +6,13 @@ import {
   ElButton,
   ElContainer,
   ElDialog,
+  ElDrawer,
   ElForm,
   ElFormItem,
   ElHeader,
   ElIcon,
   ElInput,
+  ElInputNumber,
   ElMain,
   ElMenu,
   ElMenuItem,
@@ -69,11 +71,13 @@ const COMPONENTS = {
   ElButton,
   ElContainer,
   ElDialog,
+  ElDrawer,
   ElForm,
   ElFormItem,
   ElHeader,
   ElIcon,
   ElInput,
+  ElInputNumber,
   ElMain,
   ElMenu,
   ElMenuItem,
@@ -116,6 +120,9 @@ Object.entries(ICONS).forEach(([name, component]) => {
 
 app.use(createPinia());
 app.use(router);
+
+// v-loading 指令：ElLoading 只 import 不会自动注册指令，必须显式挂上
+app.directive('loading', ElLoading.directive);
 
 // 保留 Vue 2 + Element UI 时代的调用习惯：this.$message.success(...) / this.$confirm(...)
 app.config.globalProperties.$message = ElMessage;

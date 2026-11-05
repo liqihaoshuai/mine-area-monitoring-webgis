@@ -110,7 +110,7 @@
 </template>
 
 <script>
-import DataService from '../services/DataService.js';
+import DataService, { withToken } from '../services/DataService.js';
 
 export default {
   name: 'ThematicMapGallery',
@@ -276,7 +276,9 @@ export default {
           }
           metricGroup.sensors.get(sensorKey).push({
             key: [mineId, item.sensor, item.metric, item.year, item.baseline_year].join('|'),
-            image: item.preview_url,   // 同源相对路径，避免写死端口
+            // 后端 /api/* 要令牌，专题图由 <img> 直接加载带不了请求头，
+            // 这里用 withToken 拼 ?token=，后端对 preview 路径认这个参数。
+            image: withToken(item.preview_url),
             title: this.buildTitle(item),
             year: item.year || 0,
             generatedAt: item.generated_at,
